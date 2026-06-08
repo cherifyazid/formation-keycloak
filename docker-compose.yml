@@ -1,0 +1,68 @@
+services:
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4.7
+    ports:
+      - "8080:8080"
+      - "8100:8100"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: "admin"
+      KC_BOOTSTRAP_ADMIN_PASSWORD: "admin"
+      # Database settings
+      KC_DB: "postgres"
+      KC_DB_URL: "jdbc:postgresql://postgres:5432/postgres"
+      KC_DB_USERNAME: "postgres"
+      KC_DB_PASSWORD: "postgres"
+
+    entrypoint: /bin/sh
+    command:
+        /opt/keycloak/bin/kc.sh  start-dev --log-level="INFO"
+    volumes:
+      - ./keycloak/realms/:/opt/keycloak/data/import/:ro
+    networks:
+      - keycloak_network
+
+  # PostgreSQL Database Service
+  postgres:
+    image: postgres:17.0
+    container_name: postgres
+    environment:
+      # Database configuration
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER:  "postgres"
+      POSTGRES_PASSWORD:  "postgres"
+    volumes:
+      # Persistent storage for database files
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - keycloak_network
+
+
+# UI web     : http://localhost:8025   (consultation des mails capturés)
+# SMTP       : localhost:1025          (host / port à configurer dans Keycloak)
+# kc         : host.docker.internal
+
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: kc-mailpit
+    restart: unless-stopped
+    environment:
+      # Stockage en mémoire (les mails sont perdus au redémarrage)
+      MP_MAX_MESSAGES: "500"
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # UI web
+    networks:
+      - keycloak_network
+
+
+# Persistent volumes configuration
+volumes:
+  postgres_data:
+# Network configuration
+networks:
+  keycloak_network:
+    driver: bridge
