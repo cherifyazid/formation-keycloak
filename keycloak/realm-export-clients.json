@@ -1,6 +1,6 @@
 {
   "realm": "demo2",
-  "displayName": "Demo Realmé",
+  "displayName": "Demo Realm2",
   "displayNameHtml": "<b>Demo2</b> Realm",
   "enabled": true,
   "sslRequired": "external",
