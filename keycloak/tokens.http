@@ -1,0 +1,61 @@
+### Keycloak — récupération de tokens (realm: demo2)
+### Base : http://localhost:8080  |  Token endpoint OIDC
+
+@host = http://localhost:8080
+@realm = demo2
+@tokenUrl = {{host}}/realms/{{realm}}/protocol/openid-connect/token
+
+###############################################################
+# 1) MACHINE TO MACHINE  —  Client Credentials (api-service)
+#    -> access_token uniquement (aucun utilisateur, donc pas d'id_token)
+###############################################################
+# @name m2m
+POST {{tokenUrl}}
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&client_id=api-service
+&client_secret=api-service-secret-change-me
+
+###############################################################
+# 2) UTILISATEUR  —  Resource Owner Password Credentials (login + mot de passe)
+#    -> access_token + id_token (scope openid requis pour l'id_token)
+#    PRE-REQUIS : "directAccessGrantsEnabled": true sur le client web-app
+###############################################################
+# @name userLogin
+POST {{tokenUrl}}
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password
+&client_id=web-app
+&client_secret=web-app-secret-change-me
+&username=alice
+&password=alice123
+&scope=openid profile email
+
+###############################################################
+# 3) RAFRAÎCHIR le token (utilise le refresh_token de la requête #2)
+###############################################################
+POST {{tokenUrl}}
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=refresh_token
+&client_id=web-app
+&client_secret=web-app-secret-change-me
+&refresh_token={{userLogin.response.body.refresh_token}}
+
+###############################################################
+# 4) Vérifier un token  —  Introspection (api-service)
+###############################################################
+POST {{host}}/realms/{{realm}}/protocol/openid-connect/token/introspect
+Content-Type: application/x-www-form-urlencoded
+
+client_id=api-service
+&client_secret=api-service-secret-change-me
+&token={{userLogin.response.body.access_token}}
+
+###############################################################
+# 5) UserInfo  —  avec le access_token utilisateur
+###############################################################
+GET {{host}}/realms/{{realm}}/protocol/openid-connect/userinfo
+Authorization: Bearer {{userLogin.response.body.access_token}}

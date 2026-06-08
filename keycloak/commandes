@@ -1,0 +1,48 @@
+# Ouvrir un shell dans le conteneur (adapte le nom du conteneur)
+docker exec -it keycloak bash
+cd /opt/keycloak/bin
+
+# Authentification (obligatoire avant tout) — KC 26 = pas de /auth
+./kcadm.sh config credentials  --server http://localhost:8080  --realm master  --user admin  --password admin
+
+ Créer un realm
+./kcadm.sh create realms -s realm=workspace -s enabled=true
+
+
+Créer un client
+
+./kcadm.sh create clients -r workspace \
+  -s clientId=mon-app \
+  -s enabled=true \
+  -s publicClient=false \
+  -s standardFlowEnabled=true \
+  -s serviceAccountsEnabled=true \
+  -s 'redirectUris=["http://localhost:3000/*"]' \
+  -s 'webOrigins=["+"]' \
+  -s secret=mon-secret
+
+é
+Configurer le SMTP (Mailpit)
+
+  ./kcadm.sh update realms/demo \
+    -s 'smtpServer.host=mailpit' \
+    -s 'smtpServer.port=1025' \
+    -s 'smtpServer.from=no-reply@demo.local' \
+    -s 'smtpServer.fromDisplayName=Keycloak Demo' \
+    -s 'smtpServer.ssl=false' \
+    -s 'smtpServer.starttls=false' \
+    -s 'smtpServer.auth=false'
+
+
+Créer deux utilisateurs
+    ./kcadm.sh create users -r demo \
+      -s username=alice -s enabled=true -s emailVerified=true \
+      -s email=alice@demo.local -s firstName=Alice -s lastName=Martin
+
+Définir leurs mots de passe :
+    ./kcadm.sh create users -r demo \
+      -s username=bob -s enabled=true -s emailVerified=true \
+      -s email=bob@demo.local -s firstName=Bob -s lastName=Durand
+
+
+Ajoute --temporary à set-password pour forcer le changement de mot de passe à la première connexion.

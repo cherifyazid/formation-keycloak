@@ -1,0 +1,161 @@
+Obtenir un token admin
+
+TOKEN=$(curl -s -X POST http://localhost:8080/realms/master/protocol/openid-connect/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=admin-cli" \
+  -d "username=admin" \
+  -d "password=admin" \
+  -d "grant_type=password" | jq -r '.access_token')
+
+=========================================================================
+
+  Créer un realm
+
+  curl -s -X POST http://localhost:8080/admin/realms \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"realm":"demo","enabled":true}'
+
+=========================================================================
+   Créer un client
+
+ curl -s -X POST http://localhost:8080/admin/realms/demo/clients \
+   -H "Authorization: Bearer $TOKEN" \
+   -H "Content-Type: application/json" \
+   -d '{
+     "clientId":"mon-app",
+     "enabled":true,
+     "publicClient":false,
+     "standardFlowEnabled":true,
+     "serviceAccountsEnabled":true,
+     "redirectUris":["http://localhost:3000/*"],
+     "webOrigins":["+"],
+     "secret":"mon-secret"
+   }'
+
+=========================================================================
+Configurer le SMTP (Mailpit)
+  curl -s -X PUT http://localhost:8080/admin/realms/demo \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "smtpServer":{
+        "host":"mailpit",
+        "port":"1025",
+        "from":"no-reply@demo.local",
+        "fromDisplayName":"Keycloak Demo",
+        "ssl":"false",
+        "starttls":"false",
+        "auth":"false"
+      }
+    }'
+=========================================================================
+Créer deux utilisateurs (avec mot de passe en ligne)
+ curl -s -X POST http://localhost:8080/admin/realms/demo/users \
+   -H "Authorization: Bearer $TOKEN" \
+   -H "Content-Type: application/json" \
+   -d '{
+     "username":"alice","enabled":true,"emailVerified":true,
+     "email":"alice@demo.local","firstName":"Alice","lastName":"Martin",
+     "credentials":[{"type":"password","value":"Passw0rd!","temporary":false}]
+   }'
+
+ curl -s -X POST http://localhost:8080/admin/realms/demo/users \
+   -H "Authorization: Bearer $TOKEN" \
+   -H "Content-Type: application/json" \
+   -d '{
+     "username":"bob","enabled":true,"emailVerified":true,
+     "email":"bob@demo.local","firstName":"Bob","lastName":"Durand",
+     "credentials":[{"type":"password","value":"Passw0rd!","temporary":false}]
+   }'
+=========================================================================
+définir/réinitialiser le mot de passe après création
+
+  UID_ALICE=$(curl -s "http://localhost:8080/admin/realms/demo/users?username=alice&exact=true" \
+    -H "Authorization: Bearer $TOKEN" | jq -r '.[0].id')
+
+  curl -s -X PUT "http://localhost:8080/admin/realms/demo/users/$UID_ALICE/reset-password" \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"type":"password","value":"Passw0rd!","temporary":false}'
+
+#########################################################################
+#  OBTENIR access_token / id_token  —  realm "demo2"
+#  Endpoints :
+#    AUTH  : http://localhost:8080/realms/demo2/protocol/openid-connect/auth
+#    TOKEN : http://localhost:8080/realms/demo2/protocol/openid-connect/token
+#########################################################################
+
+REALM=demo2
+KC=http://localhost:8080
+TOKEN_URL=$KC/realms/$REALM/protocol/openid-connect/token
+AUTH_URL=$KC/realms/$REALM/protocol/openid-connect/auth
+
+# =======================================================================
+# 1) api-service  —  Client Credentials (M2M)
+#    -> access_token UNIQUEMENT (pas d'id_token : aucun utilisateur)
+# =======================================================================
+curl -s -X POST "$TOKEN_URL" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials" \
+  -d "client_id=api-service" \
+  -d "client_secret=api-service-secret-change-me" | jq
+
+# =======================================================================
+# 2) web-app  —  Authorization Code (client confidentiel)
+#    Le flow standard exige un login navigateur pour obtenir le "code".
+# -----------------------------------------------------------------------
+# Étape 1 : ouvrir cette URL dans le navigateur, se connecter (alice/alice123)
+#           puis récupérer le paramètre ?code=... dans l'URL de redirection.
+echo "$AUTH_URL?client_id=web-app&response_type=code&scope=openid%20profile%20email&redirect_uri=http://localhost:8081/callback"
+
+# Étape 2 : échanger le code contre les tokens (access_token + id_token)
+CODE="COLLER_LE_CODE_ICI"
+curl -s -X POST "$TOKEN_URL" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=authorization_code" \
+  -d "client_id=web-app" \
+  -d "client_secret=web-app-secret-change-me" \
+  -d "code=$CODE" \
+  -d "redirect_uri=http://localhost:8081/callback" | jq
+
+# =======================================================================
+# 3) spa-app  —  Authorization Code + PKCE (client public)
+# -----------------------------------------------------------------------
+# Étape 1 : générer code_verifier + code_challenge (S256)
+CODE_VERIFIER=$(openssl rand -base64 96 | tr -d '\n=+/' | cut -c1-64)
+CODE_CHALLENGE=$(printf '%s' "$CODE_VERIFIER" \
+  | openssl dgst -sha256 -binary | openssl base64 | tr '+/' '-_' | tr -d '=')
+echo "verifier=$CODE_VERIFIER"
+
+# Étape 2 : ouvrir cette URL, se connecter, récupérer le ?code=...
+echo "$AUTH_URL?client_id=spa-app&response_type=code&scope=openid%20profile%20email&redirect_uri=http://localhost:3000/callback&code_challenge=$CODE_CHALLENGE&code_challenge_method=S256"
+
+# Étape 3 : échanger le code (+ code_verifier, PAS de secret)
+CODE="COLLER_LE_CODE_ICI"
+curl -s -X POST "$TOKEN_URL" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=authorization_code" \
+  -d "client_id=spa-app" \
+  -d "code=$CODE" \
+  -d "redirect_uri=http://localhost:3000/callback" \
+  -d "code_verifier=$CODE_VERIFIER" | jq
+
+# =======================================================================
+# RACCOURCI : Direct Access Grants (ROPC) — pour tester en une commande
+#   Désactivé par défaut sur spa-app / web-app.
+#   Activer d'abord : "directAccessGrantsEnabled": true sur le client,
+#   puis (web-app, confidentiel) :
+# =======================================================================
+curl -s -X POST "$TOKEN_URL" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "client_id=web-app" \
+  -d "client_secret=web-app-secret-change-me" \
+  -d "username=alice" \
+  -d "password=alice123" \
+  -d "scope=openid profile email" | jq
+
+# Lire le contenu des tokens : copier la réponse puis
+#   echo "<access_token>" | cut -d. -f2 | base64 -d 2>/dev/null | jq
+#   echo "<id_token>"     | cut -d. -f2 | base64 -d 2>/dev/null | jq

@@ -1,0 +1,36 @@
+{
+  "realm": "acme-idp",
+  "displayName": "ACME Identity Provider",
+  "enabled": true,
+  "sslRequired": "external",
+  "loginWithEmailAllowed": true,
+
+  "clients": [
+    {
+      "clientId": "org-demo-broker",
+      "name": "Broker client used by org-demo realm",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "acme-broker-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:8080/realms/org-demo/broker/acme/endpoint"
+      ]
+    }
+  ],
+
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "email": "alice@acme.com",
+      "firstName": "Alice",
+      "lastName": "Acme",
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "alice", "temporary": false }
+      ]
+    }
+  ]
+}

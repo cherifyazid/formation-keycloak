@@ -1,0 +1,129 @@
+{
+  "realm": "demo2",
+  "displayName": "Demo Realm",
+  "displayNameHtml": "<b>Demo</b> Realm",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "offlineSessionIdleTimeout": 2592000,
+
+  "roles": {
+    "realm": [
+      { "name": "user",    "description": "Utilisateur standard" },
+      { "name": "manager", "description": "Manager d'équipe" },
+      { "name": "admin",   "description": "Administrateur applicatif" }
+    ]
+  },
+
+  "groups": [
+    { "name": "developers", "path": "/developers" },
+    { "name": "managers",   "path": "/managers" }
+  ],
+
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "email": "alice@demo.local",
+      "firstName": "Alice",
+      "lastName": "Dupont",
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "alice123", "temporary": false }
+      ],
+      "realmRoles": ["user", "manager"],
+      "groups": ["/managers"]
+    },
+    {
+      "username": "bob",
+      "enabled": true,
+      "email": "bob@demo.local",
+      "firstName": "Bob",
+      "lastName": "Martin",
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "bob123", "temporary": false }
+      ],
+      "realmRoles": ["user"],
+      "groups": ["/developers"]
+    }
+  ],
+
+  "clients": [
+
+    {
+      "clientId": "spa-app",
+      "name": "Single Page Application (PKCE)",
+      "description": "Client public pour SPA — Authorization Code + PKCE",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "rootUrl": "http://localhost:3000",
+      "baseUrl": "/",
+      "redirectUris": [
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "+"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "+"
+      },
+      "defaultClientScopes": ["profile", "email", "roles", "web-origins"],
+      "optionalClientScopes":  ["offline_access", "address", "phone"]
+    },
+
+    {
+      "clientId": "web-app",
+      "name": "Web App (confidential)",
+      "description": "Client confidentiel pour application web back-end",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "web-app-secret-change-me",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "rootUrl": "http://localhost:8081",
+      "redirectUris": ["http://localhost:8081/*"],
+      "webOrigins": ["http://localhost:8081"],
+      "attributes": {
+        "post.logout.redirect.uris": "+"
+      }
+    },
+
+    {
+      "clientId": "api-service",
+      "name": "Backend API Service Account",
+      "description": "Client M2M — flow Client Credentials",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "api-service-secret-change-me",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "attributes": {
+        "access.token.lifespan": "600"
+      }
+    }
+  ],
+
+  "smtpServer": {},
+
+  "internationalizationEnabled": true,
+  "supportedLocales": ["fr", "en"],
+  "defaultLocale": "fr"
+}

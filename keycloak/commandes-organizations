@@ -1,0 +1,72 @@
+# =====================================================================
+#  Organizations + redirection IdP par domaine email  (Keycloak 26)
+#  Équivalent kcadm.sh du realm-export realm-org-demo.json
+#  (utile pour la formation : montre chaque étape "à la main")
+# =====================================================================
+
+docker exec -it formation-keycloak-keycloak-1 bash
+cd /opt/keycloak/bin
+
+# Auth admin (KC 26 = pas de /auth)
+./kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
+
+# --- 1. Realm externe "acme-idp" (joue le rôle de l'IdP de l'entreprise ACME) ---
+./kcadm.sh create realms -s realm=acme-idp -s enabled=true
+./kcadm.sh create clients -r acme-idp \
+  -s clientId=org-demo-broker -s enabled=true -s publicClient=false \
+  -s secret=acme-broker-secret -s standardFlowEnabled=true \
+  -s 'redirectUris=["http://localhost:8080/realms/org-demo/broker/acme/endpoint"]'
+./kcadm.sh create users -r acme-idp -s username=alice -s enabled=true \
+  -s emailVerified=true -s email=alice@acme.com -s firstName=Alice -s lastName=Acme
+./kcadm.sh set-password -r acme-idp --username alice --new-password alice
+
+# --- 2. Realm principal "org-demo" avec Organizations activées ---
+./kcadm.sh create realms -s realm=org-demo -s enabled=true \
+  -s organizationsEnabled=true -s loginWithEmailAllowed=true
+
+# Client public PKCE (testable avec l'app Node du dossier ../app)
+./kcadm.sh create clients -r org-demo \
+  -s clientId=org-demo-app -s enabled=true -s publicClient=true -s standardFlowEnabled=true \
+  -s 'redirectUris=["http://localhost:3000/callback"]' \
+  -s 'webOrigins=["http://localhost:3000"]' \
+  -s 'attributes={"pkce.code.challenge.method":"S256"}'
+
+# --- 3. IdP "acme" (broker OIDC vers le realm acme-idp) ---
+./kcadm.sh create identity-provider/instances -r org-demo \
+  -s alias=acme -s providerId=oidc -s enabled=true \
+  -s 'config.clientId=org-demo-broker' \
+  -s 'config.clientSecret=acme-broker-secret' \
+  -s 'config.authorizationUrl=http://localhost:8080/realms/acme-idp/protocol/openid-connect/auth' \
+  -s 'config.tokenUrl=http://localhost:8080/realms/acme-idp/protocol/openid-connect/token' \
+  -s 'config.userInfoUrl=http://localhost:8080/realms/acme-idp/protocol/openid-connect/userinfo' \
+  -s 'config.issuer=http://localhost:8080/realms/acme-idp' \
+  -s 'config.defaultScope=openid profile email' \
+  -s 'config.syncMode=IMPORT'
+
+# --- 4. Organisation "acme" avec le domaine acme.com ---
+./kcadm.sh create organizations -r org-demo \
+  -s name=acme -s alias=acme \
+  -s 'domains=[{"name":"acme.com","verified":true}]'
+
+# Récupérer l'ID de l'organisation
+ORG_ID=$(./kcadm.sh get organizations -r org-demo -q search=acme --fields id --format csv --noquotes)
+
+# --- 5. Lier l'IdP "acme" à l'organisation (corps = alias de l'IdP) ---
+echo '"acme"' | ./kcadm.sh create organizations/$ORG_ID/identity-providers -r org-demo -f -
+
+# --- 6. Activer la redirection auto quand le domaine email correspond ---
+# Les clés de config contiennent des points -> on PUT la représentation complète.
+./kcadm.sh get identity-provider/instances/acme -r org-demo > /tmp/acme.json
+# éditez /tmp/acme.json et ajoutez dans "config":
+#   "kc.org.domain": "acme.com",
+#   "kc.org.broker.redirect.mode.email-matches": "true"
+./kcadm.sh update identity-provider/instances/acme -r org-demo -f /tmp/acme.json
+
+# (Répétez 1 + 3..6 pour "globex" / globex.com -> realm globex-idp)
+
+# =====================================================================
+#  TEST
+#  Ouvrez la page de login org-demo, saisissez "alice@acme.com" :
+#  Keycloak redirige automatiquement vers l'IdP "acme".
+#  Un email d'un domaine inconnu -> reste sur le login local (mot de passe).
+# =====================================================================

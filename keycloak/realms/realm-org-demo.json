@@ -1,0 +1,119 @@
+{
+  "realm": "org-demo",
+  "displayName": "Organizations Demo",
+  "displayNameHtml": "<b>Organizations</b> Demo",
+  "enabled": true,
+  "sslRequired": "external",
+  "organizationsEnabled": true,
+  "loginWithEmailAllowed": true,
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+
+  "clients": [
+    {
+      "clientId": "org-demo-app",
+      "name": "Org Demo App (Authorization Code + PKCE)",
+      "description": "Client public pour tester l'identity-first login + redirection IdP par domaine",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "rootUrl": "http://localhost:3000",
+      "baseUrl": "/",
+      "redirectUris": ["http://localhost:3000/callback"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/"
+      },
+      "defaultClientScopes": ["profile", "email", "roles", "web-origins", "organization"]
+    }
+  ],
+
+  "identityProviders": [
+    {
+      "alias": "acme",
+      "displayName": "ACME (acme.com)",
+      "providerId": "oidc",
+      "enabled": true,
+      "trustEmail": true,
+      "storeToken": false,
+      "linkOnly": false,
+      "hideOnLogin": false,
+      "updateProfileFirstLoginMode": "on",
+      "config": {
+        "clientId": "org-demo-broker",
+        "clientSecret": "acme-broker-secret",
+        "authorizationUrl": "http://localhost:8080/realms/acme-idp/protocol/openid-connect/auth",
+        "tokenUrl": "http://localhost:8080/realms/acme-idp/protocol/openid-connect/token",
+        "userInfoUrl": "http://localhost:8080/realms/acme-idp/protocol/openid-connect/userinfo",
+        "logoutUrl": "http://localhost:8080/realms/acme-idp/protocol/openid-connect/logout",
+        "issuer": "http://localhost:8080/realms/acme-idp",
+        "defaultScope": "openid profile email",
+        "syncMode": "IMPORT",
+        "kc.org.domain": "acme.com",
+        "kc.org.broker.redirect.mode.email-matches": "true"
+      }
+    },
+    {
+      "alias": "globex",
+      "displayName": "Globex (globex.com)",
+      "providerId": "oidc",
+      "enabled": true,
+      "trustEmail": true,
+      "storeToken": false,
+      "linkOnly": false,
+      "hideOnLogin": false,
+      "updateProfileFirstLoginMode": "on",
+      "config": {
+        "clientId": "org-demo-broker",
+        "clientSecret": "globex-broker-secret",
+        "authorizationUrl": "http://localhost:8080/realms/globex-idp/protocol/openid-connect/auth",
+        "tokenUrl": "http://localhost:8080/realms/globex-idp/protocol/openid-connect/token",
+        "userInfoUrl": "http://localhost:8080/realms/globex-idp/protocol/openid-connect/userinfo",
+        "logoutUrl": "http://localhost:8080/realms/globex-idp/protocol/openid-connect/logout",
+        "issuer": "http://localhost:8080/realms/globex-idp",
+        "defaultScope": "openid profile email",
+        "syncMode": "IMPORT",
+        "kc.org.domain": "globex.com",
+        "kc.org.broker.redirect.mode.email-matches": "true"
+      }
+    }
+  ],
+
+  "organizations": [
+    {
+      "name": "acme",
+      "alias": "acme",
+      "enabled": true,
+      "description": "Organisation ACME — utilisateurs en @acme.com",
+      "domains": [
+        { "name": "acme.com", "verified": true }
+      ],
+      "identityProviders": [
+        { "alias": "acme" }
+      ]
+    },
+    {
+      "name": "globex",
+      "alias": "globex",
+      "enabled": true,
+      "description": "Organisation Globex — utilisateurs en @globex.com",
+      "domains": [
+        { "name": "globex.com", "verified": true }
+      ],
+      "identityProviders": [
+        { "alias": "globex" }
+      ]
+    }
+  ],
+
+  "internationalizationEnabled": true,
+  "supportedLocales": ["fr", "en"],
+  "defaultLocale": "fr"
+}

@@ -1,0 +1,83 @@
+{
+  "realm": "pkce-demo",
+  "displayName": "PKCE Demo Realm",
+  "displayNameHtml": "<b>PKCE</b> Demo",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+
+  "roles": {
+    "realm": [
+      { "name": "user",  "description": "Utilisateur standard" },
+      { "name": "admin", "description": "Administrateur applicatif" }
+    ]
+  },
+
+  "users": [
+    {
+      "username": "demo",
+      "enabled": true,
+      "email": "demo@pkce.local",
+      "firstName": "Demo",
+      "lastName": "User",
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "demo", "temporary": false }
+      ],
+      "realmRoles": ["user"]
+    },
+    {
+      "username": "admin-app",
+      "enabled": true,
+      "email": "admin@pkce.local",
+      "firstName": "App",
+      "lastName": "Admin",
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "admin", "temporary": false }
+      ],
+      "realmRoles": ["user", "admin"]
+    }
+  ],
+
+  "clients": [
+    {
+      "clientId": "node-pkce-app",
+      "name": "Node.js App (Authorization Code + PKCE)",
+      "description": "Client public utilisant Authorization Code Flow avec PKCE (S256)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "rootUrl": "http://localhost:3000",
+      "baseUrl": "/",
+      "redirectUris": [
+        "http://localhost:3000/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/"
+      },
+      "defaultClientScopes": ["profile", "email", "roles", "web-origins"],
+      "optionalClientScopes": ["offline_access", "address", "phone"]
+    }
+  ],
+
+  "internationalizationEnabled": true,
+  "supportedLocales": ["fr", "en"],
+  "defaultLocale": "fr"
+}

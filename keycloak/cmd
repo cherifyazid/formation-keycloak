@@ -1,0 +1,25 @@
+##!/bin/bash
+
+KEYCLOAK_HOME=/opt/keycloak
+KEYCLOAK_URL=http://localhost:8080
+KEYCLOAK_SERVER=http://localhost:8080
+KEYCLOAK_REALM=test-realm
+KEYCLOAK_REALM_DISPLAY_NAME="TEST REALM"
+KEYCLOAK_DEBUG='["true"]'
+
+
+echo "-----------------"
+echo "| Step A: Login |"
+echo "-----------------"
+${KEYCLOAK_HOME}/bin/kcadm.sh config credentials --server "${KEYCLOAK_SERVER}" --realm master --user "admin" --password "admin"
+
+echo "------------------------"
+echo "| Step B: Create Realm |"
+echo "------------------------"
+${KEYCLOAK_HOME}/bin/kcadm.sh create realms -s id=${KEYCLOAK_REALM} -s realm="${KEYCLOAK_REALM}" -s enabled=true -s displayName="${KEYCLOAK_REALM_DISPLAY_NAME}" -s loginWithEmailAllowed=false
+
+
+echo "----------------------"
+echo "| Step D: update Users |"
+echo "----------------------"
+${KEYCLOAK_HOME}/bin/kcadm.sh update realms/${KEYCLOAK_REALM} -x -s 'smtpServer.host=maildev' -s 'smtpServer.port=1025' -s 'smtpServer.from=noreply@admin.com' -s 'smtpServer.fromDisplayName=Mail Support' -s 'smtpServer.auth=false' -s 'smtpServer.ssl=false'

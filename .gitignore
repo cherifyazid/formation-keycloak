@@ -1,0 +1,13 @@
+# IntelliJ / JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Claude Code
+.claude/
+CLAUDE.md
+.mcp.json
+
+# macOS
+.DS_Store
