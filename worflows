@@ -1,0 +1,13 @@
+{
+  "name": "disable inactive users",
+  "on": "user-authenticated",
+  "if": "!has-role(\"realm-management/realm-admin\")",
+  "steps": [
+    {
+      "uses": "notify-user",
+      "after": "30d",
+      "with": { "message": "Votre compte sera bientôt désactivé pour cause d'inactivité." }
+    },
+    { "uses": "disable-user", "after": "7d" }
+  ]
+}

@@ -1,0 +1,88 @@
+# =============================================================================
+#  Bootstrap LDAP — injecté automatiquement par osixia/openldap au 1er démarrage
+#  Base DN : dc=example,dc=org
+#
+#  Structure :
+#    ou=people  -> utilisateurs (inetOrgPerson)
+#    ou=groups  -> groupes (groupOfNames)
+#
+#  Mots de passe en clair pour la démo (Keycloak vérifie via bind LDAP).
+# =============================================================================
+
+# --- Unités organisationnelles -----------------------------------------------
+dn: ou=people,dc=example,dc=org
+objectClass: organizationalUnit
+ou: people
+
+dn: ou=groups,dc=example,dc=org
+objectClass: organizationalUnit
+ou: groups
+
+# --- Utilisateurs ------------------------------------------------------------
+dn: uid=jdoe,ou=people,dc=example,dc=org
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+uid: jdoe
+cn: John Doe
+givenName: John
+sn: Doe
+mail: john.doe@example.org
+displayName: John Doe
+title: Developer
+telephoneNumber: +33100000001
+userPassword: jdoe123
+
+dn: uid=asmith,ou=people,dc=example,dc=org
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+uid: asmith
+cn: Alice Smith
+givenName: Alice
+sn: Smith
+mail: alice.smith@example.org
+displayName: Alice Smith
+title: Team Manager
+telephoneNumber: +33100000002
+userPassword: asmith123
+
+dn: uid=bwayne,ou=people,dc=example,dc=org
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+uid: bwayne
+cn: Bruce Wayne
+givenName: Bruce
+sn: Wayne
+mail: bruce.wayne@example.org
+displayName: Bruce Wayne
+title: Administrator
+telephoneNumber: +33100000003
+userPassword: bwayne123
+
+# --- Groupes (groupOfNames -> au moins un "member" obligatoire) --------------
+dn: cn=developers,ou=groups,dc=example,dc=org
+objectClass: groupOfNames
+objectClass: top
+cn: developers
+description: Equipe de developpement
+member: uid=jdoe,ou=people,dc=example,dc=org
+member: uid=asmith,ou=people,dc=example,dc=org
+
+dn: cn=managers,ou=groups,dc=example,dc=org
+objectClass: groupOfNames
+objectClass: top
+cn: managers
+description: Managers
+member: uid=asmith,ou=people,dc=example,dc=org
+
+dn: cn=admins,ou=groups,dc=example,dc=org
+objectClass: groupOfNames
+objectClass: top
+cn: admins
+description: Administrateurs
+member: uid=bwayne,ou=people,dc=example,dc=org

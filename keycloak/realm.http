@@ -1,0 +1,116 @@
+### Keycloak — Admin REST API : créer un realm + un client
+### Base : http://localhost:8080
+### Exécute les requêtes dans l'ordre (1 -> 2 -> 3 ...).
+### Le token admin de #1 est réutilisé automatiquement via {{login.response.body.access_token}}.
+
+@host = http://localhost:8080
+@newRealm = http-demo
+
+###############################################################
+# 1) S'authentifier sur le realm master (récupère un access_token admin)
+#    Client public "admin-cli" + compte admin du bootstrap.
+###############################################################
+# @name login
+POST {{host}}/realms/master/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password
+&client_id=admin-cli
+&username=admin
+&password=admin
+
+@token = {{login.response.body.access_token}}
+
+###############################################################
+# 2) Créer le realm  ->  201 Created
+###############################################################
+# @name createRealm
+POST {{host}}/admin/realms
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "realm": "{{newRealm}}",
+  "enabled": true,
+  "displayName": "HTTP Demo Realm",
+  "loginWithEmailAllowed": true,
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "sslRequired": "external"
+}
+
+###############################################################
+# 3) Créer un client CONFIDENTIEL (Authorization Code)  ->  201 Created
+#    L'URL du client créé est renvoyée dans l'en-tête "Location".
+###############################################################
+# @name createClient
+POST {{host}}/admin/realms/{{newRealm}}/clients
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "clientId": "http-app",
+  "name": "HTTP Demo App",
+  "enabled": true,
+  "publicClient": false,
+  "secret": "http-app-secret",
+  "standardFlowEnabled": true,
+  "directAccessGrantsEnabled": true,
+  "serviceAccountsEnabled": false,
+  "redirectUris": ["http://localhost:3000/*"],
+  "webOrigins": ["http://localhost:3000"],
+  "attributes": {
+    "pkce.code.challenge.method": "S256",
+    "post.logout.redirect.uris": "+"
+  }
+}
+
+###############################################################
+# 4) (Option) Créer un client PUBLIC + PKCE (SPA / app native)
+###############################################################
+POST {{host}}/admin/realms/{{newRealm}}/clients
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "clientId": "http-spa",
+  "name": "HTTP Demo SPA (PKCE)",
+  "enabled": true,
+  "publicClient": true,
+  "standardFlowEnabled": true,
+  "redirectUris": ["http://localhost:3000/callback"],
+  "webOrigins": ["http://localhost:3000"],
+  "attributes": { "pkce.code.challenge.method": "S256" }
+}
+
+###############################################################
+# 5) Vérifier : lister les clients du realm
+###############################################################
+GET {{host}}/admin/realms/{{newRealm}}/clients?clientId=http-app
+Authorization: Bearer {{token}}
+
+###############################################################
+# 6) (Option) Créer un utilisateur dans le nouveau realm
+###############################################################
+# @name createUser
+POST {{host}}/admin/realms/{{newRealm}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "alice",
+  "enabled": true,
+  "emailVerified": true,
+  "email": "alice@http-demo.local",
+  "firstName": "Alice",
+  "lastName": "Demo",
+  "credentials": [
+    { "type": "password", "value": "alice123", "temporary": false }
+  ]
+}
+
+###############################################################
+# 7) (Option) Supprimer le realm (nettoyage)
+###############################################################
+DELETE {{host}}/admin/realms/{{newRealm}}
+Authorization: Bearer {{token}}

@@ -21,7 +21,7 @@ Créer un client
   -s 'webOrigins=["+"]' \
   -s secret=mon-secret
 
-é
+
 Configurer le SMTP (Mailpit)
 
   ./kcadm.sh update realms/demo \

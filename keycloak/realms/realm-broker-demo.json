@@ -1,0 +1,88 @@
+{
+  "realm": "broker-demo",
+  "displayName": "Broker Demo — SSO externe",
+  "displayNameHtml": "<b>Broker</b> Demo",
+  "enabled": true,
+  "sslRequired": "external",
+  "loginWithEmailAllowed": true,
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+
+  "clients": [
+    {
+      "clientId": "broker-demo-app",
+      "name": "Broker Demo App (Authorization Code + PKCE)",
+      "description": "Client public pour tester le login via l'IdP externe brokerise",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "rootUrl": "http://localhost:3000",
+      "baseUrl": "/",
+      "redirectUris": ["http://localhost:3000/callback"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/"
+      },
+      "defaultClientScopes": ["profile", "email", "roles", "web-origins"]
+    }
+  ],
+
+  "identityProviders": [
+    {
+      "alias": "externe",
+      "displayName": "Se connecter via l'IdP externe",
+      "providerId": "oidc",
+      "enabled": true,
+      "trustEmail": true,
+      "storeToken": false,
+      "linkOnly": false,
+      "hideOnLogin": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "updateProfileFirstLoginMode": "off",
+      "config": {
+        "clientId": "broker-demo-broker",
+        "clientSecret": "externe-broker-secret",
+        "authorizationUrl": "http://localhost:8080/realms/idp-externe/protocol/openid-connect/auth",
+        "tokenUrl": "http://localhost:8080/realms/idp-externe/protocol/openid-connect/token",
+        "userInfoUrl": "http://localhost:8080/realms/idp-externe/protocol/openid-connect/userinfo",
+        "logoutUrl": "http://localhost:8080/realms/idp-externe/protocol/openid-connect/logout",
+        "issuer": "http://localhost:8080/realms/idp-externe",
+        "defaultScope": "openid profile email",
+        "syncMode": "IMPORT",
+        "useJwksUrl": "true"
+      }
+    }
+  ],
+
+  "identityProviderMappers": [
+    {
+      "name": "email",
+      "identityProviderAlias": "externe",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": { "syncMode": "INHERIT", "claim": "email", "user.attribute": "email" }
+    },
+    {
+      "name": "first-name",
+      "identityProviderAlias": "externe",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": { "syncMode": "INHERIT", "claim": "given_name", "user.attribute": "firstName" }
+    },
+    {
+      "name": "last-name",
+      "identityProviderAlias": "externe",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": { "syncMode": "INHERIT", "claim": "family_name", "user.attribute": "lastName" }
+    }
+  ],
+
+  "internationalizationEnabled": true,
+  "supportedLocales": ["fr", "en"],
+  "defaultLocale": "fr"
+}

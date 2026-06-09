@@ -1,0 +1,42 @@
+{
+  "realm": "idp-externe",
+  "displayName": "IdP Externe (simulé)",
+  "displayNameHtml": "<b>IdP</b> Externe",
+  "enabled": true,
+  "sslRequired": "external",
+  "loginWithEmailAllowed": true,
+
+  "clients": [
+    {
+      "clientId": "broker-demo-broker",
+      "name": "Broker client used by broker-demo realm",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "externe-broker-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:8080/realms/broker-demo/broker/externe/*",
+        "http://127.0.0.1:8080/realms/broker-demo/broker/externe/*",
+        "http://0.0.0.0:8080/realms/broker-demo/broker/externe/*"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "+"
+      }
+    }
+  ],
+
+  "users": [
+    {
+      "username": "bob",
+      "enabled": true,
+      "email": "bob@externe.com",
+      "firstName": "Bob",
+      "lastName": "Externe",
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "bob", "temporary": false }
+      ]
+    }
+  ]
+}

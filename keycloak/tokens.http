@@ -30,7 +30,7 @@ grant_type=password
 &client_id=web-app
 &client_secret=web-app-secret-change-me
 &username=alice
-&password=alice123
+&password=admin
 &scope=openid profile email
 
 ###############################################################
@@ -42,7 +42,8 @@ Content-Type: application/x-www-form-urlencoded
 grant_type=refresh_token
 &client_id=web-app
 &client_secret=web-app-secret-change-me
-&refresh_token={{userLogin.response.body.refresh_token}}
+&refresh_token=eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI2ZjhmNjViYS1mMjIzLTRlOGUtOWI1Mi1hODQ4YTMwYjU3Y2MifQ.eyJleHAiOjE3ODA5Nzk1NDMsImlhdCI6MTc4MDk3Nzc0MywianRpIjoiN2VkZWNjODUtMmEyOS04ODkxLWE4M2MtYzZkMTBkNWIyNzNhIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL3JlYWxtcy9kZW1vMiIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MC9yZWFsbXMvZGVtbzIiLCJzdWIiOiJiYzgyZjVjNS01ZTc4LTQ1NGYtOTQ4Zi00M2E3ODg0ODFiZmYiLCJ0eXAiOiJSZWZyZXNoIiwiYXpwIjoid2ViLWFwcCIsInNpZCI6IkVJbWFUc2F5VnNSMFlYeGJ3d180a3NiUyIsInNjb3BlIjoib3BlbmlkIHdlYi1vcmlnaW5zIHJvbGVzIHByb2ZpbGUgYmFzaWMgYWNyIGVtYWlsIn0.aUTVDTuRLco7dD5ZaU9XDFrEaWcXC_YJwtJuFjaJMo2i-OaQ1zIqDXKlOBUwzjX5Qo0XK9gvs0Lg52hXo1xuGg
+
 
 ###############################################################
 # 4) Vérifier un token  —  Introspection (api-service)
