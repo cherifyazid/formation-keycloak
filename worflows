@@ -11,3 +11,19 @@
     { "uses": "disable-user", "after": "7d" }
   ]
 }
+
+--------------------------------------
+
+{
+  "name": "notify on login",
+  "on": "user-authenticated",
+  "steps": [
+    {
+      "uses": "notify-user",
+      "with": {
+        "subject": "Nouvelle connexion à votre compte",
+        "message": "Bonjour, une connexion à votre compte vient d'avoir lieu. Si ce n'était pas vous, contactez votre administrateur."
+      }
+    }
+  ]
+}
